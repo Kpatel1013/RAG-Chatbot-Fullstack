@@ -1,0 +1,40 @@
+# Secrets — never commit API keys or local env
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.venv/
+venv/
+backend/.venv/
+
+# Node / frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# AWS CDK
+infra/.venv/
+infra/cdk.out/
+infra/cdk.context.json
+
+# Docker / local data
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
