@@ -1,0 +1,35 @@
+RAG Chatbot Sample Knowledge Base
+=================================
+
+This document is bundled with the project so you can test retrieval-augmented generation locally.
+
+About This Project
+------------------
+This is a fullstack RAG chatbot built with React and TypeScript on the frontend,
+FastAPI and Python on the backend, LangChain for the RAG pipeline, PostgreSQL with
+pgvector for vector search, and DeepSeek as the LLM.
+
+Architecture
+------------
+- Frontend: React + TypeScript chat UI served by nginx in production
+- Backend: FastAPI REST API for chat and conversation history
+- Vector store: PostgreSQL with the pgvector extension
+- Embeddings: sentence-transformers/all-MiniLM-L6-v2 (local)
+- LLM: DeepSeek via OpenAI-compatible API
+
+Local Development
+-----------------
+Run the full stack with Docker Compose:
+
+  docker compose up --build
+
+Ingest documents into the vector store:
+
+  docker compose exec backend python -m app.rag ./data
+
+Then open http://localhost:5173 and ask questions about this project.
+
+Deployment Target
+-----------------
+The production target is AWS: separate ECR repositories and ECS Fargate services
+for frontend and backend, with infrastructure defined in AWS CDK.
