@@ -26,8 +26,12 @@ class RagChatbotStack(Stack):
             max_azs=2,
             nat_gateways=0,
             subnet_configuration=[
-                ec2.SubnetConfiguration(name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24),
-                ec2.SubnetConfiguration(name="Isolated", subnet_type=ec2.SubnetType.PRIVATE_ISOLATED, cidr_mask=24),
+                ec2.SubnetConfiguration(
+                    name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24
+                ),
+                ec2.SubnetConfiguration(
+                    name="Isolated", subnet_type=ec2.SubnetType.PRIVATE_ISOLATED, cidr_mask=24
+                ),
             ],
         )
 
@@ -39,14 +43,24 @@ class RagChatbotStack(Stack):
         backend_sg.connections.allow_from(alb_sg, ec2.Port.tcp(8000))
         frontend_sg.connections.allow_from(alb_sg, ec2.Port.tcp(80))
 
-        alb = elbv2.ApplicationLoadBalancer(self, "Alb", vpc=vpc, internet_facing=True, security_group=alb_sg)
+        alb = elbv2.ApplicationLoadBalancer(
+            self, "Alb", vpc=vpc, internet_facing=True, security_group=alb_sg
+        )
 
         backend_tg = elbv2.ApplicationTargetGroup(
-            self, "BackendTg", vpc=vpc, port=8000, target_type=elbv2.TargetType.IP,
+            self,
+            "BackendTg",
+            vpc=vpc,
+            port=8000,
+            target_type=elbv2.TargetType.IP,
             health_check=elbv2.HealthCheck(path="/health", interval=Duration.seconds(30)),
         )
         frontend_tg = elbv2.ApplicationTargetGroup(
-            self, "FrontendTg", vpc=vpc, port=80, target_type=elbv2.TargetType.IP,
+            self,
+            "FrontendTg",
+            vpc=vpc,
+            port=80,
+            target_type=elbv2.TargetType.IP,
             health_check=elbv2.HealthCheck(path="/", interval=Duration.seconds(30)),
         )
 
@@ -54,7 +68,11 @@ class RagChatbotStack(Stack):
         listener.add_action(
             "Api",
             priority=10,
-            conditions=[elbv2.ListenerCondition.path_patterns(["/api", "/api/*", "/health", "/docs", "/docs/*"])],
+            conditions=[
+                elbv2.ListenerCondition.path_patterns(
+                    ["/api", "/api/*", "/health", "/docs", "/docs/*"]
+                )
+            ],
             action=elbv2.ListenerAction.forward([backend_tg]),
         )
 
@@ -85,25 +103,38 @@ class RagChatbotStack(Stack):
         )
 
         backend_repo = ecr.Repository(
-            self, "BackendRepo", repository_name="rag-chatbot-backend",
-            removal_policy=RemovalPolicy.DESTROY, empty_on_delete=True,
+            self,
+            "BackendRepo",
+            repository_name="rag-chatbot-backend",
+            removal_policy=RemovalPolicy.DESTROY,
+            empty_on_delete=True,
         )
         frontend_repo = ecr.Repository(
-            self, "FrontendRepo", repository_name="rag-chatbot-frontend",
-            removal_policy=RemovalPolicy.DESTROY, empty_on_delete=True,
+            self,
+            "FrontendRepo",
+            repository_name="rag-chatbot-frontend",
+            removal_policy=RemovalPolicy.DESTROY,
+            empty_on_delete=True,
         )
 
         # --- services ---
         cluster = ecs.Cluster(self, "Cluster", vpc=vpc)
         cors = f"http://{alb.load_balancer_dns_name}"
 
-        backend_task = ecs.FargateTaskDefinition(self, "BackendTask", cpu=1024, memory_limit_mib=2048)
+        backend_task = ecs.FargateTaskDefinition(
+            self, "BackendTask", cpu=1024, memory_limit_mib=2048
+        )
         backend_task.add_container(
             "Backend",
             image=ecs.ContainerImage.from_ecr_repository(backend_repo, tag="latest"),
             logging=ecs.LogDrivers.aws_logs(
                 stream_prefix="backend",
-                log_group=logs.LogGroup(self, "BackendLogs", retention=logs.RetentionDays.ONE_WEEK, removal_policy=RemovalPolicy.DESTROY),
+                log_group=logs.LogGroup(
+                    self,
+                    "BackendLogs",
+                    retention=logs.RetentionDays.ONE_WEEK,
+                    removal_policy=RemovalPolicy.DESTROY,
+                ),
             ),
             environment={"CORS_ORIGINS": cors},
             secrets={
@@ -116,25 +147,40 @@ class RagChatbotStack(Stack):
             port_mappings=[ecs.PortMapping(container_port=8000)],
         )
         backend_svc = ecs.FargateService(
-            self, "BackendService", cluster=cluster, task_definition=backend_task,
-            assign_public_ip=True, security_groups=[backend_sg],
+            self,
+            "BackendService",
+            cluster=cluster,
+            task_definition=backend_task,
+            assign_public_ip=True,
+            security_groups=[backend_sg],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
         )
         backend_svc.attach_to_application_target_group(backend_tg)
 
-        frontend_task = ecs.FargateTaskDefinition(self, "FrontendTask", cpu=256, memory_limit_mib=512)
+        frontend_task = ecs.FargateTaskDefinition(
+            self, "FrontendTask", cpu=256, memory_limit_mib=512
+        )
         frontend_task.add_container(
             "Frontend",
             image=ecs.ContainerImage.from_ecr_repository(frontend_repo, tag="latest"),
             logging=ecs.LogDrivers.aws_logs(
                 stream_prefix="frontend",
-                log_group=logs.LogGroup(self, "FrontendLogs", retention=logs.RetentionDays.ONE_WEEK, removal_policy=RemovalPolicy.DESTROY),
+                log_group=logs.LogGroup(
+                    self,
+                    "FrontendLogs",
+                    retention=logs.RetentionDays.ONE_WEEK,
+                    removal_policy=RemovalPolicy.DESTROY,
+                ),
             ),
             port_mappings=[ecs.PortMapping(container_port=80)],
         )
         frontend_svc = ecs.FargateService(
-            self, "FrontendService", cluster=cluster, task_definition=frontend_task,
-            assign_public_ip=True, security_groups=[frontend_sg],
+            self,
+            "FrontendService",
+            cluster=cluster,
+            task_definition=frontend_task,
+            assign_public_ip=True,
+            security_groups=[frontend_sg],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
         )
         frontend_svc.attach_to_application_target_group(frontend_tg)
