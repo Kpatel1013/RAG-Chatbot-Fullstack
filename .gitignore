@@ -16,6 +16,7 @@ __pycache__/
 .venv/
 venv/
 backend/.venv/
+.format-venv/
 
 # Node / frontend
 node_modules/
