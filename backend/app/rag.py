@@ -1,6 +1,6 @@
 import io
-import sys
 import tempfile
+import uuid
 from functools import lru_cache
 from pathlib import Path
 
@@ -14,14 +14,17 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from PIL import Image
+from sqlalchemy import text
 
 from app.config import settings
+from app.database import engine
 
 ALLOWED_EXTS = {".pdf", ".txt", ".md", ".png", ".jpg", ".jpeg", ".webp", ".gif"}
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 SPLITTER = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
 
-SYSTEM = """Answer using the context below. If you don't know, say so.
+PROMPT = """Answer using the context. If a document is attached, use only that text.
+If they say "this" or "summarize this", they mean the attached document.
 
 Context:
 {context}"""
@@ -33,7 +36,7 @@ def _embeddings():
 
 
 @lru_cache
-def _vectorstore():
+def _store():
     return PGVector(
         embedding_function=_embeddings(),
         collection_name="document_chunks",
@@ -56,62 +59,80 @@ def warm_up():
     _embeddings()
 
 
-def ask(question: str) -> str:
-    docs = _vectorstore().similarity_search(question, k=4)
+def _chunks_for_doc(doc_id: str) -> list[Document]:
+    """Load every chunk that belongs to one uploaded file."""
+    query = text("""
+        SELECT e.document
+        FROM langchain_pg_embedding e
+        JOIN langchain_pg_collection c ON e.collection_id = c.uuid
+        WHERE c.name = 'document_chunks'
+          AND e.cmetadata->>'doc_id' = :doc_id
+        """)
+
+    with engine.connect() as conn:
+        rows = conn.execute(query, {"doc_id": doc_id}).fetchall()
+
+    return [Document(page_content=row[0]) for row in rows if row[0]]
+
+
+def ask(question: str, doc_id: str | None = None) -> str:
+    if doc_id:
+        docs = _chunks_for_doc(doc_id)
+    else:
+        docs = _store().similarity_search(question, k=4)
+
     context = "\n\n---\n\n".join(d.page_content for d in docs) or "No documents found."
+
     chain = (
-        ChatPromptTemplate.from_messages([("system", SYSTEM), ("human", "{question}")])
+        ChatPromptTemplate.from_messages([("system", PROMPT), ("human", "{question}")])
         | _llm()
         | StrOutputParser()
     )
     return chain.invoke({"context": context, "question": question})
 
 
-def _read_file(filename: str, content: bytes) -> list[Document]:
+def _read_file(filename: str, content: bytes, doc_id: str) -> list[Document]:
     ext = Path(filename).suffix.lower()
+    meta = {"source": filename, "doc_id": doc_id}
 
+    # Screenshots / photos → OCR
     if ext in IMAGE_EXTS:
-        text = pytesseract.image_to_string(Image.open(io.BytesIO(content))).strip()
-        return [Document(page_content=text, metadata={"source": filename})] if text else []
+        text_from_image = pytesseract.image_to_string(Image.open(io.BytesIO(content))).strip()
+        if not text_from_image:
+            return []
+        return [Document(page_content=text_from_image, metadata=meta)]
 
+    # PDF / text files → write to a temp file, then load
     with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
         tmp.write(content)
         path = tmp.name
 
     try:
-        loader = PyPDFLoader(path) if ext == ".pdf" else TextLoader(path, encoding="utf-8")
-        return loader.load()
+        if ext == ".pdf":
+            docs = PyPDFLoader(path).load()
+        else:
+            docs = TextLoader(path, encoding="utf-8").load()
+
+        for doc in docs:
+            doc.metadata.update(meta)
+        return docs
     finally:
         Path(path).unlink(missing_ok=True)
 
 
-def ingest_file(filename: str, content: bytes) -> int:
+def ingest_file(filename: str, content: bytes) -> tuple[int, str]:
     ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_EXTS:
         raise ValueError(f"Unsupported type: {ext}")
 
-    docs = _read_file(filename, content)
+    doc_id = str(uuid.uuid4())
+    docs = _read_file(filename, content, doc_id)
     if not docs:
-        return 0
+        return 0, doc_id
 
     chunks = SPLITTER.split_documents(docs)
-    _vectorstore().add_documents(chunks)
-    return len(chunks)
+    for chunk in chunks:
+        chunk.metadata.update({"source": filename, "doc_id": doc_id})
 
-
-def ingest_path(path: Path) -> int:
-    if path.is_file():
-        return ingest_file(path.name, path.read_bytes())
-
-    total = 0
-    for file in path.rglob("*"):
-        if file.is_file() and file.suffix.lower() in ALLOWED_EXTS:
-            total += ingest_file(file.name, file.read_bytes())
-    return total
-
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python -m app.rag <file-or-folder>")
-        sys.exit(1)
-    print(f"Ingested {ingest_path(Path(sys.argv[1]))} chunks.")
+    _store().add_documents(chunks)
+    return len(chunks), doc_id
