@@ -181,4 +181,4 @@ Requires configured AWS credentials, Docker, and the AWS CLI. The second script 
 
 ## License
 
-Personal / portfolio project. Add a license file if you want to open-source it formally.
+Personal / portfolio project.
