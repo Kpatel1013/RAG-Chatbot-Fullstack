@@ -176,11 +176,6 @@ Requires configured AWS credentials, Docker, and the AWS CLI. The second script 
 - **LLM:** DeepSeek (OpenAI-compatible API)  
 - **Ops:** Docker Compose, AWS CDK, ECR, ECS Fargate  
 
----
-
-## Resume / portfolio blurb (optional)
-
-> Built a fullstack RAG chatbot with React/TypeScript and FastAPI that ingests PDFs and screenshots (OCR), stores embeddings in Postgres/pgvector, and answers with DeepSeek. Packaged with Docker Compose for local use and AWS CDK for ECR/ECS deployment.
 
 ---
 
