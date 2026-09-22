@@ -16,6 +16,7 @@ from app.rag import ALLOWED_EXTS, ask, ingest_file, warm_up
 class ChatRequest(BaseModel):
     conversation_id: str | None = None
     message: str
+    doc_id: str | None = None
 
 
 class ChatResponse(BaseModel):
@@ -39,6 +40,7 @@ class MessageOut(BaseModel):
 class UploadResponse(BaseModel):
     filename: str
     chunks: int
+    doc_id: str
     message: str
 
 
@@ -85,17 +87,13 @@ async def upload(file: UploadFile = File(...)):
         raise HTTPException(400, "Empty file")
 
     try:
-        chunks = ingest_file(file.filename, content)
+        chunks, doc_id = ingest_file(file.filename, content)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
     if chunks == 0:
         raise HTTPException(400, "No text found in file")
 
-    return UploadResponse(
-        filename=file.filename,
-        chunks=chunks,
-        message=f"Added {chunks} chunks from {file.filename}. You can ask about it now.",
-    )
+    return UploadResponse(filename=file.filename, chunks=chunks, doc_id=doc_id, message="Ready")
 
 
 @app.post("/api/chat", response_model=ChatResponse)
@@ -119,8 +117,11 @@ def chat(body: ChatRequest, db: Session = Depends(get_db)):
         db.add(conv)
         db.flush()
 
+    if body.doc_id:
+        conv.doc_id = body.doc_id
+
     db.add(Message(conversation_id=conv.id, role="user", content=text))
-    reply = ask(text)
+    reply = ask(text, doc_id=body.doc_id or conv.doc_id)
     db.add(Message(conversation_id=conv.id, role="assistant", content=reply))
     conv.updated_at = datetime.now(timezone.utc)
     db.commit()
@@ -131,8 +132,15 @@ def chat(body: ChatRequest, db: Session = Depends(get_db)):
 @app.get("/api/conversations", response_model=list[ConversationOut])
 def list_conversations(db: Session = Depends(get_db)):
     user = get_default_user(db)
-    rows = db.query(Conversation).filter_by(user_id=user.id).order_by(Conversation.updated_at.desc()).all()
-    return [ConversationOut(id=c.id, title=c.title, updatedAt=c.updated_at.isoformat()) for c in rows]
+    rows = (
+        db.query(Conversation)
+        .filter_by(user_id=user.id)
+        .order_by(Conversation.updated_at.desc())
+        .all()
+    )
+    return [
+        ConversationOut(id=c.id, title=c.title, updatedAt=c.updated_at.isoformat()) for c in rows
+    ]
 
 
 @app.get("/api/conversations/{conv_id}/messages", response_model=list[MessageOut])
@@ -141,4 +149,18 @@ def list_messages(conv_id: str, db: Session = Depends(get_db)):
     if not db.query(Conversation).filter_by(id=conv_id, user_id=user.id).first():
         raise HTTPException(404, "Conversation not found")
     rows = db.query(Message).filter_by(conversation_id=conv_id).order_by(Message.created_at).all()
-    return [MessageOut(id=m.id, role=m.role, content=m.content, createdAt=m.created_at.isoformat()) for m in rows]
+    return [
+        MessageOut(id=m.id, role=m.role, content=m.content, createdAt=m.created_at.isoformat())
+        for m in rows
+    ]
+
+
+@app.delete("/api/conversations/{conv_id}", status_code=204)
+def delete_conversation(conv_id: str, db: Session = Depends(get_db)):
+    user = get_default_user(db)
+    conv = db.query(Conversation).filter_by(id=conv_id, user_id=user.id).first()
+    if not conv:
+        raise HTTPException(404, "Conversation not found")
+    db.query(Message).filter_by(conversation_id=conv.id).delete()
+    db.delete(conv)
+    db.commit()
