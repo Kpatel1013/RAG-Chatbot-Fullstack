@@ -22,7 +22,6 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg2://rag:rag@db:5432/ragdb
       CORS_ORIGINS: http://localhost:5173,http://localhost
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
     env_file:
       - path: ./backend/.env
         required: false
