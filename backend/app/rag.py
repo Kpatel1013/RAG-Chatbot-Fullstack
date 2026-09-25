@@ -23,8 +23,12 @@ ALLOWED_EXTS = {".pdf", ".txt", ".md", ".png", ".jpg", ".jpeg", ".webp", ".gif"}
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 SPLITTER = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
 
-PROMPT = """Answer using the context. If a document is attached, use only that text.
-If they say "this" or "summarize this", they mean the attached document.
+CHAT_PROMPT = """You are a helpful assistant. Answer the user naturally.
+No document is attached to this conversation, so do not invent or recall document contents."""
+
+RAG_PROMPT = """Answer using ONLY the context below. That context is the document attached to this chat.
+If they say "this" or "summarize this", they mean that attached document.
+If the context is empty, say you don't have a document to use.
 
 Context:
 {context}"""
@@ -76,15 +80,24 @@ def _chunks_for_doc(doc_id: str) -> list[Document]:
 
 
 def ask(question: str, doc_id: str | None = None) -> str:
-    if doc_id:
-        docs = _chunks_for_doc(doc_id)
-    else:
-        docs = _store().similarity_search(question, k=4)
+    # No attachment / no saved doc on this chat → plain chat, no vector search.
+    # Searching the whole store would leak old uploads into a "new" conversation.
+    if not doc_id:
+        chain = (
+            ChatPromptTemplate.from_messages(
+                [("system", CHAT_PROMPT), ("human", "{question}")]
+            )
+            | _llm()
+            | StrOutputParser()
+        )
+        return chain.invoke({"question": question})
 
+    docs = _chunks_for_doc(doc_id)
     context = "\n\n---\n\n".join(d.page_content for d in docs) or "No documents found."
-
     chain = (
-        ChatPromptTemplate.from_messages([("system", PROMPT), ("human", "{question}")])
+        ChatPromptTemplate.from_messages(
+            [("system", RAG_PROMPT), ("human", "{question}")]
+        )
         | _llm()
         | StrOutputParser()
     )
