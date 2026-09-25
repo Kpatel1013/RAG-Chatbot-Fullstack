@@ -31,12 +31,14 @@ Browser
        → DeepSeek API (LLM)
 ```
 
-| Path | Responsibility |
-|---|---|
-| `frontend/` | Chat UI |
-| `backend/` | REST API, OCR, RAG, DeepSeek |
-| `infra/` | AWS CDK stack + deploy scripts |
-| `docker-compose.yml` | Local full stack |
+
+| Path                 | Responsibility                 |
+| -------------------- | ------------------------------ |
+| `frontend/`          | Chat UI                        |
+| `backend/`           | REST API, OCR, RAG, DeepSeek   |
+| `infra/`             | AWS CDK stack + deploy scripts |
+| `docker-compose.yml` | Local full stack               |
+
 
 ---
 
@@ -73,9 +75,9 @@ docker compose up --build
 
 Then open:
 
-- App: http://localhost:5173  
-- API health: http://localhost:8000/health  
-- API docs: http://localhost:8000/docs  
+- App: [http://localhost:5173](http://localhost:5173)  
+- API health: [http://localhost:8000/health](http://localhost:8000/health)  
+- API docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 First backend build can take several minutes (embedding model download).
 
@@ -98,22 +100,26 @@ docker compose stop
 
 ### Backend (`backend/.env`)
 
-| Variable | Purpose |
-|---|---|
-| `DATABASE_URL` | Postgres URL (Compose overrides this to use the `db` service) |
-| `DEEPSEEK_API_KEY` | Required for chat |
-| `DEEPSEEK_API_BASE` | Default `https://api.deepseek.com` |
-| `DEEPSEEK_MODEL` | e.g. `deepseek-flash` |
-| `EMBEDDING_MODEL` | Default `sentence-transformers/all-MiniLM-L6-v2` |
-| `CORS_ORIGINS` | Comma-separated allowed origins |
+
+| Variable            | Purpose                                                       |
+| ------------------- | ------------------------------------------------------------- |
+| `DATABASE_URL`      | Postgres URL (Compose overrides this to use the `db` service) |
+| `DEEPSEEK_API_KEY`  | Required for chat                                             |
+| `DEEPSEEK_API_BASE` | Default `https://api.deepseek.com`                            |
+| `DEEPSEEK_MODEL`    | e.g. `deepseek-flash`                                         |
+| `EMBEDDING_MODEL`   | Default `sentence-transformers/all-MiniLM-L6-v2`              |
+| `CORS_ORIGINS`      | Comma-separated allowed origins                               |
+
 
 `backend/.env` is gitignored. Commit only `backend/.env.example`.
 
 ### Frontend (`frontend/.env`)
 
-| Variable | Purpose |
-|---|---|
+
+| Variable       | Purpose                                            |
+| -------------- | -------------------------------------------------- |
 | `VITE_API_URL` | Backend base URL (default `http://localhost:8000`) |
+
 
 In Docker, `VITE_API_URL` is also passed as a build arg in Compose.
 
@@ -121,16 +127,18 @@ In Docker, `VITE_API_URL` is also passed as a build arg in Compose.
 
 ## API overview
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/health` | Liveness check |
-| `POST` | `/api/upload` | Ingest a file; returns `doc_id` |
-| `POST` | `/api/chat` | Send a message (optional `conversation_id`, `doc_id`) |
-| `GET` | `/api/conversations` | List chats |
-| `GET` | `/api/conversations/{id}/messages` | Load messages |
-| `DELETE` | `/api/conversations/{id}` | Delete a chat |
 
-Interactive docs: http://localhost:8000/docs
+| Method   | Path                               | Description                                           |
+| -------- | ---------------------------------- | ----------------------------------------------------- |
+| `GET`    | `/health`                          | Liveness check                                        |
+| `POST`   | `/api/upload`                      | Ingest a file; returns `doc_id`                       |
+| `POST`   | `/api/chat`                        | Send a message (optional `conversation_id`, `doc_id`) |
+| `GET`    | `/api/conversations`               | List chats                                            |
+| `GET`    | `/api/conversations/{id}/messages` | Load messages                                         |
+| `DELETE` | `/api/conversations/{id}`          | Delete a chat                                         |
+
+
+Interactive docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
@@ -174,8 +182,7 @@ Requires configured AWS credentials, Docker, and the AWS CLI. The second script 
 - **Backend:** FastAPI, SQLAlchemy, LangChain, HuggingFace embeddings, Tesseract OCR  
 - **Data:** PostgreSQL 16 + pgvector  
 - **LLM:** DeepSeek (OpenAI-compatible API)  
-- **Ops:** Docker Compose, AWS CDK, ECR, ECS Fargate  
-
+- **Ops:** Docker Compose, AWS CDK, ECR, ECS Fargate
 
 ---
 
