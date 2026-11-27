@@ -60,11 +60,9 @@ Under the hood it uses a **RAG** (retrieval-augmented generation) pipeline: embe
 
 ### Walkthrough video
 
-[![Demo walkthrough preview](docs/screenshots/demo-walkthrough-preview.gif)](https://kpatel1013.github.io/RAG-Chatbot-Fullstack/walkthrough.html)
+![Demo walkthrough preview](docs/screenshots/demo-walkthrough-preview.gif)
 
-**[▶️ Play full walkthrough with voiceover (~2 min)](https://kpatel1013.github.io/RAG-Chatbot-Fullstack/walkthrough.html)**
-
-*Caption: Click the preview (or the link) for the full video with audio — attach a document, ask questions, and see follow-ups stay scoped to that file.*
+*Caption: Short preview of the demo — attach a document, ask questions, and see follow-ups stay scoped to that file. Full recording with voiceover: [`docs/demo-walkthrough.mp4`](docs/demo-walkthrough.mp4).*
 
 ### Empty chat — first impression
 
