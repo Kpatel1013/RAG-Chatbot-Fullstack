@@ -60,11 +60,7 @@ Under the hood it uses a **RAG** (retrieval-augmented generation) pipeline: embe
 
 ### Walkthrough video
 
-<video controls width="100%" playsinline>
-  <source src=
 https://github.com/user-attachments/assets/86da2b97-ec95-458a-9b34-9093012d59b9
-" type="video/mp4">
-</video>
 
 *Caption: ~2 min walkthrough with voiceover — attach a document, ask questions, and see follow-ups stay scoped to that file.*
 
