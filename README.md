@@ -60,7 +60,7 @@ Under the hood it uses a **RAG** (retrieval-augmented generation) pipeline: embe
 
 ### Walkthrough video
 
-https://github.com/user-attachments/assets/d7d8eb34-09e4-4b67-a012-3ba7da1579d7
+https://github.com/user-attachments/assets/67af957b-cd92-4841-826a-5a997722730b
 
 *Caption: ~2 min walkthrough with voiceover — attach a document, ask questions, and see follow-ups stay scoped to that file.*
 
