@@ -60,9 +60,9 @@ Under the hood it uses a **RAG** (retrieval-augmented generation) pipeline: embe
 
 ### Walkthrough video
 
-![Demo walkthrough preview](docs/screenshots/demo-walkthrough-preview.gif)
+https://github.com/user-attachments/assets/d7d8eb34-09e4-4b67-a012-3ba7da1579d7
 
-*Caption: Short preview of the demo — attach a document, ask questions, and see follow-ups stay scoped to that file. Full recording with voiceover: [`docs/demo-walkthrough.mp4`](docs/demo-walkthrough.mp4).*
+*Caption: ~2 min walkthrough with voiceover — attach a document, ask questions, and see follow-ups stay scoped to that file.*
 
 ### Empty chat — first impression
 
