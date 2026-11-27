@@ -60,9 +60,11 @@ Under the hood it uses a **RAG** (retrieval-augmented generation) pipeline: embe
 
 ### Walkthrough video
 
-<video src="docs/demo-walkthrough.mp4" controls width="100%"></video>
+<video controls width="100%" playsinline>
+  <source src="https://cdn.jsdelivr.net/gh/Kpatel1013/RAG-Chatbot-Fullstack@a583a7d/docs/demo-walkthrough.mp4" type="video/mp4">
+</video>
 
-*[Download the demo walkthrough](docs/demo-walkthrough.mp4)* (~2 min) — attach a document, ask questions, and see follow-ups stay scoped to that file. Voiceover explains the flow while the app runs.
+*Caption: ~2 min walkthrough with voiceover — attach a document, ask questions, and see follow-ups stay scoped to that file.*
 
 ### Empty chat — first impression
 
