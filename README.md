@@ -58,6 +58,12 @@ Under the hood it uses a **RAG** (retrieval-augmented generation) pipeline: embe
 
 ## Visuals & Demos
 
+### Walkthrough video
+
+<video src="docs/demo-walkthrough.mp4" controls width="100%"></video>
+
+*[Download the demo walkthrough](docs/demo-walkthrough.mp4)* (~2 min) — attach a document, ask questions, and see follow-ups stay scoped to that file. Voiceover explains the flow while the app runs.
+
 ### Empty chat — first impression
 
 ![Empty RAG Chat UI with greeting and compose box](docs/screenshots/chat-empty.png)
@@ -195,7 +201,7 @@ export DEEPSEEK_API_KEY='your_key_here'
 ├── backend/           # FastAPI app, RAG pipeline, Dockerfile
 ├── frontend/          # React + TypeScript UI, nginx Dockerfile
 ├── infra/             # AWS CDK app + deploy scripts
-├── docs/screenshots/  # README visuals
+├── docs/              # README screenshots + demo walkthrough video
 ├── docker-compose.yml # Local db + backend + frontend
 └── README.md
 ```
@@ -224,7 +230,6 @@ Ideas for the future:
 - Streaming responses in the UI
 - Citation chips that jump back to the source chunk
 - Auth and multi-user workspaces
-- A short demo video / GIF walkthrough in this README
 
 **Call to action:** Feedback and ideas are welcome. Open a [GitHub issue](https://github.com/Kpatel1013/RAG-Chatbot-Fullstack/issues) on this repo, or connect on [LinkedIn](https://www.linkedin.com/in/keshavpatel13) if you’d like to discuss the design.
 
